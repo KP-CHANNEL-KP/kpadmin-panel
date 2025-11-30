@@ -18,7 +18,7 @@
       margin-bottom: 20px;
     }
     label { display: block; margin-top: 8px; }
-    input, textarea {
+    input {
       width: 100%;
       padding: 6px;
       margin-top: 4px;
@@ -45,6 +45,20 @@
       overflow-y: auto;
     }
     #panel { display: none; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 13px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 4px 6px;
+      text-align: left;
+    }
+    th {
+      background: #eee;
+    }
   </style>
 </head>
 <body>
@@ -52,7 +66,7 @@
 
   <div class="card" id="loginCard">
     <h2>Admin Login</h2>
-    <p>Cloudflare Worker ထဲမှာ သတ်ထားတဲ့ <code>ADMIN_SECRET</code> ကို ဒီမှာရိုက်ပေးရမယ်။</p>
+    <p>Cloudflare Worker ထဲမှာ သတ်ထားတဲ့ <code>ADMIN_SECRET</code> ကို ဒီမှာ ထည့်ရပါမယ်။</p>
     <label>Admin Secret
       <input id="adminSecret" type="password" placeholder="e.g. myadmin123">
     </label>
@@ -70,31 +84,19 @@
         <label>Password
           <input id="c_password" placeholder="123456">
         </label>
-        <label>Plan
-          <input id="c_plan" value="VIP">
-        </label>
-        <label>Days (Expire)
+        <label>Days (Expire အထိ)
           <input id="c_days" type="number" value="30">
-        </label>
-        <label>VPN Config
-          <textarea id="c_vpnConfig" rows="4" placeholder="OVPN / config text"></textarea>
         </label>
         <button id="btnCreate">Create User</button>
       </div>
 
       <div class="card">
-        <h2>User Renew / ပြင်မယ်</h2>
+        <h2>User Renew (နေ့ထပ်တိုး)</h2>
         <label>Username
           <input id="e_username">
         </label>
-        <label>Extra Days (ထပ်တိုး)
+        <label>Extra Days
           <input id="e_days" type="number" value="30">
-        </label>
-        <label>New Plan (optional)
-          <input id="e_plan" placeholder="VIP / VVIP (ချင်ရင် ပြင်)">
-        </label>
-        <label>New VPN Config (optional)
-          <textarea id="e_vpnConfig" rows="4" placeholder="မလိုရင် ပြန်မရေးသက်မှတ်နေသလိုပဲ ထား"></textarea>
         </label>
         <button id="btnEdit">Renew / Update</button>
 
@@ -113,6 +115,12 @@
       </label>
       <button id="btnCheck">Check User</button>
       <pre id="userInfo" class="log"></pre>
+    </div>
+
+    <div class="card">
+      <h2>User List အားလုံးကြည့်မယ်</h2>
+      <button id="btnList">Load Users</button>
+      <div id="userList"></div>
     </div>
 
     <div class="card">
@@ -154,10 +162,9 @@
       saveAdminSecret(secret);
       statusEl.textContent = "Secret သိမ်းပြီး ✔ Admin panel ထဲသွားလို့ရပြီ";
       setLoggedIn(true);
-      log("Admin login OK (local only, Worker အနေနဲ့တော့ header နဲ့ verify မယ်)");
+      log("Admin login OK (local only, Worker ဘက်မှာ header နဲ့ verify လုပ်မယ်)");
     };
 
-    // Helper: POST to Worker with admin secret
     async function apiPost(path, body) {
       const secret = getAdminSecret();
       if (!secret) {
@@ -187,21 +194,17 @@
     document.getElementById("btnCreate").onclick = async () => {
       const username = document.getElementById("c_username").value.trim();
       const password = document.getElementById("c_password").value.trim();
-      const plan = document.getElementById("c_plan").value.trim();
       const days = document.getElementById("c_days").value.trim();
-      const vpnConfig = document.getElementById("c_vpnConfig").value;
 
       if (!username || !password || !days) {
-        alert("username / password / days သုံးခုလုံးဖြည့်ပေးပါ");
+        alert("username / password / days သုံးခုလုံး ဖြည့်ပေးပါ");
         return;
       }
 
       const data = await apiPost("/create.php", {
         username,
         password,
-        plan,
-        days,
-        vpnConfig
+        days
       });
 
       if (data && data.status === "ok") {
@@ -211,30 +214,21 @@
       }
     };
 
-    // Edit / Renew user
+    // Renew user
     document.getElementById("btnEdit").onclick = async () => {
       const username = document.getElementById("e_username").value.trim();
       const days = document.getElementById("e_days").value.trim();
-      const plan = document.getElementById("e_plan").value.trim();
-      const vpnConfig = document.getElementById("e_vpnConfig").value;
 
       if (!username || !days) {
         alert("username / days ဖြည့်ပါ");
         return;
       }
 
-      const body = {
-        username,
-        days
-      };
-      if (plan) body.plan = plan;
-      if (vpnConfig) body.vpnConfig = vpnConfig;
-
-      const data = await apiPost("/edit.php", body);
+      const data = await apiPost("/edit.php", { username, days });
       if (data && data.status === "ok") {
-        alert("User updated: " + username);
+        alert("User renewed: " + username);
       } else if (data) {
-        alert("Edit Fail: " + (data.message || "unknown error"));
+        alert("Renew Fail: " + (data.message || "unknown error"));
       }
     };
 
@@ -268,7 +262,58 @@
       el.textContent = JSON.stringify(data, null, 2);
     };
 
-    // page load အချိန်မှာ admin secret ရှိသလောက် auto login
+    // List users
+    document.getElementById("btnList").onclick = async () => {
+      const secret = getAdminSecret();
+      if (!secret) {
+        alert("Admin secret မသတ်ထားသေးဘူး");
+        return;
+      }
+      const url = API_BASE + "/list.php";
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "x-admin-secret": secret
+        }
+      });
+      let data;
+      try {
+        data = await res.json();
+      } catch (e) {
+        data = { status: "error", message: "Invalid JSON", raw: await res.text() };
+      }
+      log("/list.php => " + JSON.stringify(data));
+
+      const container = document.getElementById("userList");
+      container.innerHTML = "";
+      if (!data || data.status !== "ok") {
+        container.textContent = "Load fail: " + (data && data.message);
+        return;
+      }
+
+      const users = data.users || [];
+      if (!users.length) {
+        container.textContent = "User မရှိသေးဘူး";
+        return;
+      }
+
+      const table = document.createElement("table");
+      const thead = document.createElement("thead");
+      thead.innerHTML = "<tr><th>Username</th><th>Created</th><th>Expire</th></tr>";
+      table.appendChild(thead);
+      const tbody = document.createElement("tbody");
+      for (const u of users) {
+        const tr = document.createElement("tr");
+        const created = u.createdAt ? new Date(u.createdAt * 1000).toLocaleString() : "";
+        const expire = u.expireAt ? new Date(u.expireAt * 1000).toLocaleString() : "";
+        tr.innerHTML = `<td>${u.username}</td><td>${created}</td><td>${expire}</td>`;
+        tbody.appendChild(tr);
+      }
+      table.appendChild(tbody);
+      container.appendChild(table);
+    };
+
+    // auto show panel if secret already saved
     window.addEventListener("load", () => {
       if (getAdminSecret()) {
         setLoggedIn(true);
