@@ -1,325 +1,303 @@
-<!DOCTYPE html>
-<html lang="my">
-<head>
-  <meta charset="UTF-8">
-  <title>KP VIP Admin Panel</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      max-width: 900px;
-      margin: 20px auto;
-      padding: 0 10px;
-    }
-    h1 { text-align: center; }
-    .card {
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      padding: 15px;
-      margin-bottom: 20px;
-    }
-    label { display: block; margin-top: 8px; }
-    input {
-      width: 100%;
-      padding: 6px;
-      margin-top: 4px;
-      box-sizing: border-box;
-    }
-    button {
-      margin-top: 10px;
-      padding: 8px 12px;
-      cursor: pointer;
-    }
-    .row {
-      display: flex;
-      gap: 20px;
-    }
-    .row .card {
-      flex: 1;
-    }
-    .log {
-      font-size: 12px;
-      background: #f5f5f5;
-      padding: 10px;
-      white-space: pre-wrap;
-      max-height: 250px;
-      overflow-y: auto;
-    }
-    #panel { display: none; }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-      font-size: 13px;
-    }
-    th, td {
-      border: 1px solid #ddd;
-      padding: 4px 6px;
-      text-align: left;
-    }
-    th {
-      background: #eee;
-    }
-  </style>
-</head>
-<body>
-  <h1>KP VIP Admin Panel</h1>
+export default {
+  async fetch(request, env, ctx) {
+    const url = new URL(request.url);
+    let path = url.pathname;
 
-  <div class="card" id="loginCard">
-    <h2>Admin Login</h2>
-    <p>Cloudflare Worker ထဲမှာ သတ်ထားတဲ့ <code>ADMIN_SECRET</code> ကို ဒီမှာ ထည့်ရပါမယ်။</p>
-    <label>Admin Secret
-      <input id="adminSecret" type="password" placeholder="e.g. myadmin123">
-    </label>
-    <button id="btnAdminLogin">Login</button>
-    <p id="loginStatus"></p>
-  </div>
-
-  <div id="panel">
-    <div class="row">
-      <div class="card">
-        <h2>အသစ် User ဖန်တီးမယ်</h2>
-        <label>Username
-          <input id="c_username" placeholder="user1">
-        </label>
-        <label>Password
-          <input id="c_password" placeholder="123456">
-        </label>
-        <label>Days (Expire အထိ)
-          <input id="c_days" type="number" value="30">
-        </label>
-        <button id="btnCreate">Create User</button>
-      </div>
-
-      <div class="card">
-        <h2>User Renew (နေ့ထပ်တိုး)</h2>
-        <label>Username
-          <input id="e_username">
-        </label>
-        <label>Extra Days
-          <input id="e_days" type="number" value="30">
-        </label>
-        <button id="btnEdit">Renew / Update</button>
-
-        <h2 style="margin-top: 20px;">User ဖျက်မယ်</h2>
-        <label>Username
-          <input id="d_username">
-        </label>
-        <button id="btnDelete">Delete User</button>
-      </div>
-    </div>
-
-    <div class="card">
-      <h2>User ရှိ/မရှိ စစ်မယ်</h2>
-      <label>Username
-        <input id="q_username">
-      </label>
-      <button id="btnCheck">Check User</button>
-      <pre id="userInfo" class="log"></pre>
-    </div>
-
-    <div class="card">
-      <h2>User List အားလုံးကြည့်မယ်</h2>
-      <button id="btnList">Load Users</button>
-      <div id="userList"></div>
-    </div>
-
-    <div class="card">
-      <h2>Log</h2>
-      <pre id="log" class="log"></pre>
-    </div>
-  </div>
-
-  <script>
-    // မင်း Worker API base URL
-    const API_BASE = "https://vpnadmin.kpwork.qzz.io/kpvip";
-
-    function log(msg) {
-      const el = document.getElementById("log");
-      el.textContent += msg + "\n";
-      el.scrollTop = el.scrollHeight;
+    // Route base /kpvip/ ကို ဖြတ်ပေး
+    const base = "/kpvip";
+    if (path.startsWith(base)) {
+      path = path.slice(base.length); // "/kpvip/create.php" -> "/create.php"
+      if (path === "") path = "/";
     }
 
-    function setLoggedIn(flag) {
-      document.getElementById("panel").style.display = flag ? "block" : "none";
-    }
-
-    function getAdminSecret() {
-      return localStorage.getItem("ADMIN_SECRET") || "";
-    }
-
-    function saveAdminSecret(secret) {
-      localStorage.setItem("ADMIN_SECRET", secret);
-    }
-
-    // Admin Login button
-    document.getElementById("btnAdminLogin").onclick = () => {
-      const secret = document.getElementById("adminSecret").value.trim();
-      const statusEl = document.getElementById("loginStatus");
-      if (!secret) {
-        statusEl.textContent = "Secret မထည့်ရသေးဘူး";
-        return;
-      }
-      saveAdminSecret(secret);
-      statusEl.textContent = "Secret သိမ်းပြီး ✔ Admin panel ထဲသွားလို့ရပြီ";
-      setLoggedIn(true);
-      log("Admin login OK (local only, Worker ဘက်မှာ header နဲ့ verify လုပ်မယ်)");
-    };
-
-    async function apiPost(path, body) {
-      const secret = getAdminSecret();
-      if (!secret) {
-        alert("Admin secret မသတ်ထားသေးဘူး");
-        return null;
-      }
-      const url = API_BASE + path;
-      const res = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-          "x-admin-secret": secret
-        },
-        body: new URLSearchParams(body)
+    // CORS simple
+    if (request.method === "OPTIONS") {
+      return new Response(null, {
+        status: 204,
+        headers: corsHeaders(),
       });
-      let data;
-      try {
-        data = await res.json();
-      } catch (e) {
-        data = { status: "error", message: "Invalid JSON", raw: await res.text() };
-      }
-      log(path + " => " + JSON.stringify(data));
-      return data;
     }
 
-    // Create user
-    document.getElementById("btnCreate").onclick = async () => {
-      const username = document.getElementById("c_username").value.trim();
-      const password = document.getElementById("c_password").value.trim();
-      const days = document.getElementById("c_days").value.trim();
-
-      if (!username || !password || !days) {
-        alert("username / password / days သုံးခုလုံး ဖြည့်ပေးပါ");
-        return;
+    try {
+      // --------- Admin-only routes ---------
+      if (request.method === "POST" && path === "/create.php") {
+        await requireAdminOrThrow(request, env);
+        return await handleCreate(request, env);
       }
 
-      const data = await apiPost("/create.php", {
-        username,
-        password,
-        days
-      });
-
-      if (data && data.status === "ok") {
-        alert("User ဖန်တီးပြီး: " + username);
-      } else if (data) {
-        alert("Create Fail: " + (data.message || "unknown error"));
-      }
-    };
-
-    // Renew user
-    document.getElementById("btnEdit").onclick = async () => {
-      const username = document.getElementById("e_username").value.trim();
-      const days = document.getElementById("e_days").value.trim();
-
-      if (!username || !days) {
-        alert("username / days ဖြည့်ပါ");
-        return;
+      if (request.method === "POST" && path === "/edit.php") {
+        await requireAdminOrThrow(request, env);
+        return await handleEdit(request, env);
       }
 
-      const data = await apiPost("/edit.php", { username, days });
-      if (data && data.status === "ok") {
-        alert("User renewed: " + username);
-      } else if (data) {
-        alert("Renew Fail: " + (data.message || "unknown error"));
-      }
-    };
+      if (request.method === "POST" && path === "/delete.php") {
+        // Admin panel delete (x-admin-secret) **or** App auto-delete (Authorization)
+        const isAdmin = await checkAdmin(request, env);
+        const auth = request.headers.get("Authorization") || "";
+        const isAppDelete = auth === "N4VPN-MinKhant";
 
-    // Delete user
-    document.getElementById("btnDelete").onclick = async () => {
-      const username = document.getElementById("d_username").value.trim();
-      if (!username) {
-        alert("username ဖြည့်ပါ");
-        return;
-      }
-      const ok = confirm("User " + username + " ကို တကယ်ဖျက်မလား?");
-      if (!ok) return;
-
-      const data = await apiPost("/delete.php", { username });
-      if (data && data.status === "ok") {
-        alert("User deleted: " + username);
-      } else if (data) {
-        alert("Delete Fail: " + (data.message || "unknown error"));
-      }
-    };
-
-    // Check user
-    document.getElementById("btnCheck").onclick = async () => {
-      const username = document.getElementById("q_username").value.trim();
-      if (!username) {
-        alert("username ဖြည့်ပါ");
-        return;
-      }
-      const data = await apiPost("/user_exist.php", { username });
-      const el = document.getElementById("userInfo");
-      el.textContent = JSON.stringify(data, null, 2);
-    };
-
-    // List users
-    document.getElementById("btnList").onclick = async () => {
-      const secret = getAdminSecret();
-      if (!secret) {
-        alert("Admin secret မသတ်ထားသေးဘူး");
-        return;
-      }
-      const url = API_BASE + "/list.php";
-      const res = await fetch(url, {
-        method: "POST",
-        headers: {
-          "x-admin-secret": secret
+        if (!isAdmin && !isAppDelete) {
+          return json({ status: "error", message: "Unauthorized" }, 401);
         }
-      });
-      let data;
-      try {
-        data = await res.json();
-      } catch (e) {
-        data = { status: "error", message: "Invalid JSON", raw: await res.text() };
-      }
-      log("/list.php => " + JSON.stringify(data));
-
-      const container = document.getElementById("userList");
-      container.innerHTML = "";
-      if (!data || data.status !== "ok") {
-        container.textContent = "Load fail: " + (data && data.message);
-        return;
+        return await handleDelete(request, env, isAppDelete);
       }
 
-      const users = data.users || [];
-      if (!users.length) {
-        container.textContent = "User မရှိသေးဘူး";
-        return;
+      if (request.method === "POST" && path === "/list.php") {
+        await requireAdminOrThrow(request, env);
+        return await handleList(env);
       }
 
-      const table = document.createElement("table");
-      const thead = document.createElement("thead");
-      thead.innerHTML = "<tr><th>Username</th><th>Created</th><th>Expire</th></tr>";
-      table.appendChild(thead);
-      const tbody = document.createElement("tbody");
-      for (const u of users) {
-        const tr = document.createElement("tr");
-        const created = u.createdAt ? new Date(u.createdAt * 1000).toLocaleString() : "";
-        const expire = u.expireAt ? new Date(u.expireAt * 1000).toLocaleString() : "";
-        tr.innerHTML = `<td>${u.username}</td><td>${created}</td><td>${expire}</td>`;
-        tbody.appendChild(tr);
+      // --------- App routes (no admin) ---------
+      if (request.method === "POST" && path === "/login.php") {
+        return await handleLogin(request, env);
       }
-      table.appendChild(tbody);
-      container.appendChild(table);
-    };
 
-    // auto show panel if secret already saved
-    window.addEventListener("load", () => {
-      if (getAdminSecret()) {
-        setLoggedIn(true);
-        log("Loaded with existing admin secret");
+      if (request.method === "POST" && path === "/user_exist.php") {
+        return await handleUserExist(request, env);
       }
+
+      // --------- Default ---------
+      return json({ status: "error", message: "Not found", path, method: request.method }, 404);
+    } catch (e) {
+      return json(
+        { status: "error", message: e.message || "Internal error" },
+        500
+      );
+    }
+  },
+};
+
+/* ---------------------- Helpers ---------------------- */
+
+function corsHeaders(extra = {}) {
+  return {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type,Authorization,x-admin-secret",
+    ...extra,
+  };
+}
+
+function json(obj, status = 200) {
+  return new Response(JSON.stringify(obj), {
+    status,
+    headers: {
+      "Content-Type": "application/json; charset=utf-8",
+      ...corsHeaders(),
+    },
+  });
+}
+
+// Admin check: x-admin-secret **or** Authorization header
+async function checkAdmin(request, env) {
+  const secret = env.ADMIN_SECRET;
+  if (!secret) return false;
+
+  const h = request.headers;
+  const x = h.get("x-admin-secret") || "";
+  const auth = h.get("Authorization") || "";
+
+  if (x === secret) return true;
+  if (auth === secret) return true;
+  if (auth === `Bearer ${secret}`) return true;
+
+  return false;
+}
+
+async function requireAdminOrThrow(request, env) {
+  const ok = await checkAdmin(request, env);
+  if (!ok) {
+    throw new Error("Unauthorized");
+  }
+}
+
+// form-data (x-www-form-urlencoded)
+async function getFormData(request) {
+  const text = await request.text();
+  return new URLSearchParams(text);
+}
+
+// ဖိုင်တစ်ခုစီကို KV ထဲမှာ JSON နဲ့သိမ်းမယ်
+async function getUser(env, username) {
+  if (!username) return null;
+  const raw = await env.USERS_KV.get(username);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+async function putUser(env, username, data) {
+  const value = JSON.stringify(data);
+  await env.USERS_KV.put(username, value);
+}
+
+async function deleteUser(env, username) {
+  await env.USERS_KV.delete(username);
+}
+
+/* ---------------------- Handlers ---------------------- */
+
+// Admin create user
+async function handleCreate(request, env) {
+  const form = await getFormData(request);
+  const username = (form.get("username") || "").trim();
+  const password = (form.get("password") || "").trim();
+  const daysStr = (form.get("days") || "").trim();
+
+  if (!username || !password || !daysStr) {
+    return json({ status: "error", message: "missing_fields" }, 400);
+  }
+
+  const days = Number(daysStr) || 0;
+  const now = Math.floor(Date.now() / 1000);
+  const expireAt = now + days * 24 * 60 * 60;
+
+  const exist = await getUser(env, username);
+  const createdAt = exist?.createdAt || now;
+
+  const data = {
+    username,
+    password,
+    createdAt,
+    expireAt,
+    device_id: exist?.device_id || null,
+  };
+
+  await putUser(env, username, data);
+
+  return json({ status: "ok", message: "User created", username, expireAt });
+}
+
+// Admin renew / App re-upload (device_id + expired_date)
+async function handleEdit(request, env) {
+  const form = await getFormData(request);
+  const username = (form.get("username") || "").trim();
+
+  if (!username) {
+    return json({ status: "error", message: "missing_username" }, 400);
+  }
+
+  const u = await getUser(env, username);
+  if (!u) {
+    return json({ status: "error", message: "user_not_found" }, 404);
+  }
+
+  const daysStr = (form.get("days") || "").trim();
+  const expiredDateStr = (form.get("expired_date") || "").trim();
+  const deviceId = (form.get("device_id") || "").trim();
+
+  const now = Math.floor(Date.now() / 1000);
+  let expireAt = u.expireAt || now;
+
+  if (daysStr) {
+    const days = Number(daysStr) || 0;
+    expireAt = now + days * 24 * 60 * 60;
+  } else if (expiredDateStr) {
+    // App က millis နဲ့ပို့တာကို seconds ထဲပြောင်းဆဲ
+    const ms = Number(expiredDateStr) || 0;
+    expireAt = Math.floor(ms / 1000);
+  }
+
+  if (deviceId) {
+    u.device_id = deviceId;
+  }
+
+  u.expireAt = expireAt;
+  await putUser(env, username, u);
+
+  return json({ status: "ok", message: "updated", username, expireAt });
+}
+
+// Admin / App delete
+async function handleDelete(request, env, isAppDelete) {
+  const form = await getFormData(request);
+  const username = isAppDelete
+    ? (form.get("usernameToDelete") || "").trim()
+    : (form.get("username") || "").trim();
+
+  if (!username) {
+    return json({ status: "error", message: "missing_username" }, 400);
+  }
+
+  await deleteUser(env, username);
+  return json({ status: "ok", message: "deleted", username });
+}
+
+// Admin list users
+async function handleList(env) {
+  const list = await env.USERS_KV.list();
+  const users = [];
+
+  for (const k of list.keys) {
+    const u = await getUser(env, k.name);
+    if (!u) continue;
+    users.push({
+      username: u.username || k.name,
+      createdAt: u.createdAt || null,
+      expireAt: u.expireAt || null,
     });
-  </script>
-</body>
-</html>
+  }
+
+  return json({ status: "ok", users });
+}
+
+// App login
+async function handleLogin(request, env) {
+  const form = await getFormData(request);
+  const username = (form.get("username") || "").trim();
+  const password = (form.get("password") || "").trim();
+
+  if (!username || !password) {
+    return json({ status: "error", message: "missing_fields" }, 400);
+  }
+
+  const u = await getUser(env, username);
+  if (!u) {
+    return json({ status: "user_not_found", message: "User not found" });
+  }
+
+  if (u.password !== password) {
+    return json({ status: "wrong_password", message: "Wrong password" });
+  }
+
+  const now = Math.floor(Date.now() / 1000);
+  if (!u.expireAt || u.expireAt < now) {
+    return json({ status: "expired", message: "Expired" });
+  }
+
+  const remainingSec = u.expireAt - now;
+  const remainingDays = Math.max(1, Math.floor(remainingSec / (24 * 60 * 60)));
+
+  // APK သဘောတရားကိုလိုက်ပြီး "login" နဲ့ expired_date(days) ပို့မယ်
+  return json({
+    status: "login",
+    user: username,
+    expired_date: String(remainingDays),
+  });
+}
+
+// App + Panel user_exist
+async function handleUserExist(request, env) {
+  const form = await getFormData(request);
+  const username = (form.get("username") || "").trim();
+
+  if (!username) {
+    return json({ status: "error", message: "missing_username" }, 400);
+  }
+
+  const u = await getUser(env, username);
+  if (!u) {
+    // APK မှာ status != "success" ဆိုရင် local data ဖျက်တာမို့
+    return json({ status: "error", message: "user_not_found" });
+  }
+
+  return json({
+    status: "success",
+    user: username,
+    expireAt: u.expireAt || null,
+    createdAt: u.createdAt || null,
+  });
+}
