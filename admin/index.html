@@ -2,464 +2,516 @@
 <html lang="my">
 <head>
   <meta charset="UTF-8" />
-  <title>KP VIP Admin</title>
+  <title>KP VIP Admin Panel</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root {
-      --bg: #020617;
-      --bg-card: #020617;
-      --bg-card2: #020617;
-      --border: #1f2937;
-      --accent: #3b82f6;
-      --accent-soft: rgba(59,130,246,0.2);
+      --primary: #2563eb;
+      --primary-soft: #dbeafe;
       --danger: #ef4444;
-      --text: #e5e7eb;
-      --text-soft: #9ca3af;
-      --radius: 14px;
+      --bg: #0f172a;
+      --card-bg: #0b1220;
+      --border: #1f2937;
+      --text-main: #e5e7eb;
+      --text-muted: #9ca3af;
     }
-    * { box-sizing: border-box; }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
-      padding: 20px 10px 32px;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: radial-gradient(circle at top, #0f172a 0, #020617 50%, #000 100%);
-      color: var(--text);
+      background: radial-gradient(circle at top, #1d2538, #020617 60%);
+      color: var(--text-main);
       min-height: 100vh;
     }
-    .shell {
-      max-width: 980px;
+
+    .wrapper {
+      max-width: 1100px;
       margin: 0 auto;
+      padding: 20px 16px 40px;
     }
-    header {
+
+    .topbar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 10px;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .title-block h1 {
+      font-size: 24px;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(34, 197, 94, 0.15);
+      border: 1px solid rgba(34, 197, 94, 0.4);
+      color: #bbf7d0;
+    }
+
+    .subtitle {
+      margin: 4px 0 0;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .small-tag {
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      padding: 16px 16px 14px;
+      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.8);
+    }
+
+    .card h2 {
+      margin: 0 0 6px;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .card small {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    label {
+      display: block;
+      margin-top: 10px;
+      font-size: 13px;
+    }
+
+    .input {
+      width: 100%;
+      margin-top: 4px;
+      padding: 7px 9px;
+      border-radius: 8px;
+      border: 1px solid #1f2937;
+      background: #020617;
+      color: var(--text-main);
+      font-size: 13px;
+      outline: none;
+      transition: border 0.15s, box-shadow 0.15s, background 0.15s;
+    }
+
+    .input:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.4);
+      background: #020617;
+    }
+
+    .row {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
       margin-bottom: 16px;
     }
-    .title-block {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
+
+    .row .card {
+      flex: 1 1 260px;
     }
-    .title {
-      font-size: 20px;
-      font-weight: 600;
-      letter-spacing: .04em;
-    }
-    .subtitle {
-      font-size: 12px;
-      color: var(--text-soft);
-    }
-    .badge {
+
+    .btn {
+      margin-top: 12px;
+      padding: 7px 12px;
+      font-size: 13px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      cursor: pointer;
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      font-size: 11px;
-      padding: 4px 8px;
-      border-radius: 999px;
-      background: rgba(34,197,94,0.08);
-      color: #bbf7d0;
-      border: 1px solid rgba(34,197,94,0.3);
-      margin-top: 4px;
+      background: linear-gradient(135deg, #2563eb, #22c55e);
+      color: white;
+      font-weight: 500;
+      box-shadow: 0 10px 25px rgba(37, 99, 235, 0.35);
+      transition: transform 0.12s, box-shadow 0.12s, opacity 0.1s;
     }
-    .badge span {
-      display: inline-block;
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 14px 30px rgba(37, 99, 235, 0.5);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+      opacity: 0.9;
+      box-shadow: 0 10px 20px rgba(37, 99, 235, 0.35);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      border-color: #374151;
+      color: var(--text-main);
+      box-shadow: none;
+    }
+
+    .btn-secondary:hover {
+      background: #020617;
+      transform: none;
+      box-shadow: 0 0 0 1px #374151;
+    }
+
+    .btn-danger {
+      background: transparent;
+      border-color: rgba(239, 68, 68, 0.7);
+      color: #fecaca;
+      box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.5);
+    }
+
+    .btn-danger:hover {
+      background: rgba(239, 68, 68, 0.15);
+    }
+
+    .pill-field {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-top: 8px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .pill-field span {
+      padding: 1px 7px;
+      border-radius: 999px;
+      border: 1px solid #374151;
+    }
+
+    .user-panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .user-panel-header h2 {
+      margin: 0;
+    }
+
+    .filter-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    .filter-row .input {
+      max-width: 220px;
+    }
+
+    .status-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      padding: 2px 7px;
+      border-radius: 999px;
+      border: 1px solid rgba(34, 197, 94, 0.6);
+      background: rgba(22, 163, 74, 0.12);
+      color: #bbf7d0;
+    }
+
+    .status-chip.expired {
+      border-color: rgba(239, 68, 68, 0.7);
+      background: rgba(239, 68, 68, 0.12);
+      color: #fecaca;
+    }
+
+    .status-chip span {
+      opacity: 0.9;
+    }
+
+    .status-dot {
       width: 6px;
       height: 6px;
       border-radius: 999px;
       background: #22c55e;
-      box-shadow: 0 0 0 4px rgba(34,197,94,0.35);
     }
 
-    /* Admin Secret bar */
-    .secret-bar {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      background: rgba(15,23,42,0.9);
-      border-radius: 999px;
-      padding: 4px 8px 4px 10px;
-      border: 1px solid var(--border);
-      box-shadow: 0 0 0 1px rgba(15,23,42,0.6);
-      backdrop-filter: blur(14px);
-    }
-    .secret-bar label {
-      font-size: 11px;
-      color: var(--text-soft);
-      white-space: nowrap;
-    }
-    .secret-bar input {
-      border: none;
-      outline: none;
-      font-size: 11px;
-      padding: 5px 7px;
-      min-width: 120px;
-      border-radius: 999px;
-      background: #020617;
-      color: var(--text);
-    }
-    .secret-bar button {
-      border-radius: 999px;
-      border: none;
-      font-size: 11px;
-      padding: 5px 10px;
-      background: var(--accent);
-      color: white;
-      cursor: pointer;
-      white-space: nowrap;
-    }
-    .secret-status {
-      font-size: 10px;
-      color: var(--text-soft);
-      white-space: nowrap;
+    .status-dot.expired {
+      background: #ef4444;
     }
 
-    main {
-      display: grid;
-      grid-template-columns: minmax(0,1.2fr) minmax(0,1.2fr);
-      gap: 14px;
-    }
-    @media (max-width: 780px) {
-      main { grid-template-columns: minmax(0,1fr); }
-      header { flex-direction: column; align-items: flex-start; }
-      .secret-bar { align-self: stretch; justify-content: flex-start; }
-    }
-
-    .card {
-      background: linear-gradient(145deg, rgba(15,23,42,0.94), rgba(15,23,42,0.8));
-      border-radius: var(--radius);
-      padding: 14px 14px 16px;
-      border: 1px solid rgba(31,41,55,0.9);
-      box-shadow:
-        0 18px 45px rgba(15,23,42,0.85),
-        0 0 0 1px rgba(15,23,42,0.8);
-    }
-    .card h2 {
-      margin: 0 0 4px;
-      font-size: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 6px;
-    }
-    .card small {
-      font-size: 11px;
-      color: var(--text-soft);
-      display: block;
-      margin-bottom: 8px;
-    }
-    .card-section {
-      margin-top: 10px;
-      padding-top: 10px;
-      border-top: 1px dashed rgba(55,65,81,0.8);
-    }
-    label {
-      display: block;
-      font-size: 11px;
-      color: var(--text-soft);
-      margin-bottom: 3px;
-    }
-    input[type="text"],
-    input[type="number"] {
-      width: 100%;
-      padding: 7px 8px;
-      border-radius: 9px;
-      border: 1px solid rgba(55,65,81,0.9);
-      background: radial-gradient(circle at top left,#020617,#020617);
-      color: var(--text);
-      font-size: 12px;
-      outline: none;
-    }
-    input::placeholder { color: #6b7280; }
-
-    .field {
-      margin-bottom: 8px;
-    }
-
-    .btn-row {
-      display: flex;
-      gap: 8px;
-      margin-top: 4px;
-    }
-    button.primary {
-      flex: 1;
-      border-radius: 999px;
-      border: none;
-      padding: 7px 10px;
-      font-size: 12px;
-      background: linear-gradient(135deg,#2563eb,#3b82f6);
-      color: white;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-    }
-    button.secondary {
-      flex: 1;
-      border-radius: 999px;
-      border: none;
-      padding: 7px 10px;
-      font-size: 12px;
-      background: rgba(15,23,42,0.9);
-      color: var(--text);
-      border: 1px solid rgba(55,65,81,0.9);
-      cursor: pointer;
-    }
-    button.danger {
-      flex: 1;
-      border-radius: 999px;
-      border: none;
-      padding: 7px 10px;
-      font-size: 12px;
-      background: linear-gradient(135deg,#b91c1c,#ef4444);
-      color: white;
-      cursor: pointer;
-    }
-
-    .helper {
-      font-size: 11px;
-      color: var(--text-soft);
-      margin-top: 4px;
-    }
-    .helper strong {
-      color: #f97316;
-      font-weight: 500;
-    }
-
-    .muted {
-      font-size: 11px;
-      color: var(--text-soft);
-    }
-
-    .user-list {
-      margin-top: 8px;
-      background: rgba(15,23,42,0.9);
-      border-radius: 10px;
-      border: 1px solid rgba(31,41,55,0.9);
-      max-height: 260px;
-      overflow: auto;
-      padding: 6px 6px 6px 0;
-      font-size: 12px;
-    }
     table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 12px;
+      font-size: 13px;
+      margin-top: 4px;
     }
+
     th, td {
+      padding: 6px 6px;
+      border-bottom: 1px solid #111827;
       text-align: left;
-      padding: 4px 10px;
-      border-bottom: 1px solid rgba(31,41,55,0.6);
       white-space: nowrap;
     }
+
     th {
+      font-size: 12px;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      background: #020617;
       position: sticky;
       top: 0;
-      background: rgba(15,23,42,0.98);
+      z-index: 1;
+    }
+
+    tbody tr:hover td {
+      background: rgba(15, 23, 42, 0.8);
+    }
+
+    .username-col {
       font-weight: 500;
+      font-size: 13px;
     }
-    tr:last-child td { border-bottom: none; }
-    .pill {
-      display: inline-flex;
-      padding: 2px 7px;
-      border-radius: 999px;
-      font-size: 10px;
-      background: rgba(15,23,42,0.9);
-      border: 1px solid rgba(55,65,81,0.9);
-      color: var(--text-soft);
+
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 12px;
     }
-    .pill.ok {
-      background: rgba(22,163,74,0.12);
-      border-color: rgba(22,163,74,0.5);
-      color: #bbf7d0;
+
+    .dim {
+      color: var(--text-muted);
+      font-size: 12px;
     }
-    .pill.bad {
-      background: rgba(185,28,28,0.08);
-      border-color: rgba(239,68,68,0.6);
-      color: #fecaca;
+
+    .user-table-wrapper {
+      max-height: 360px;
+      overflow: auto;
+      margin-top: 4px;
+      border-radius: 10px;
+      border: 1px solid #111827;
+      background: rgba(15, 23, 42, 0.85);
     }
-    .status-chip {
+
+    .empty {
+      padding: 12px 4px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .tag {
       font-size: 11px;
-      padding: 2px 8px;
+      padding: 2px 6px;
       border-radius: 999px;
-      background: rgba(15,23,42,0.9);
-      border: 1px solid rgba(55,65,81,0.9);
-      color: var(--text-soft);
+      border: 1px solid #1f2937;
+      background: #020617;
+      color: #9ca3af;
+    }
+
+    @media (max-width: 640px) {
+      .topbar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .user-table-wrapper {
+        max-height: 260px;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="shell">
-    <header>
+  <div class="wrapper">
+    <div class="topbar">
       <div class="title-block">
-        <div class="title">KP VIP Admin</div>
-        <div class="subtitle">
-          Username / Password တွေသတ်မှတ်ပြီး VIP User ကို Worker + KV နဲ့ စီမံချင်တဲ့ Panel
-        </div>
-        <div class="badge"><span></span> Worker + KV</div>
+        <h1>
+          KP VIP Admin
+          <span class="badge">Worker + KV</span>
+        </h1>
+        <p class="subtitle">Username / Password ကို အလွယ်တကူ စီမံခန့်ခွဲဖို့ Panel ဖြစ်ပါတယ်။</p>
       </div>
-
-      <div class="secret-bar">
-        <label for="adminSecret">Admin Secret</label>
-        <input id="adminSecret" type="password" placeholder="••••••••" />
-        <button id="btnAdminSecret">Save</button>
-        <div id="secretStatus" class="secret-status">not set</div>
+      <div class="top-actions">
+        <span class="small-tag">API: <b>/kpvip/*.php</b></span>
       </div>
-    </header>
+    </div>
 
-    <main>
+    <!-- Top row: Create + Renew/Delete -->
+    <div class="row">
       <!-- Create -->
-      <section class="card">
+      <div class="card">
         <h2>အသစ် User ဖန်တီးမယ်</h2>
-        <small>Username, Password, Expire Days သတ်မှတ်ပြီး VIP User အသစ်ဖန်တီးပါ။</small>
+        <small>Username, Password, Expire Days သတ်မှတ်ပြီး VIP User ဖန်တီးပါ။</small>
 
-        <div class="field">
-          <label for="c_username">Username</label>
-          <input id="c_username" type="text" placeholder="eg. kp001" />
-        </div>
-        <div class="field">
-          <label for="c_password">Password</label>
-          <input id="c_password" type="text" placeholder="eg. 123456" />
-        </div>
-        <div class="field">
-          <label for="c_days">Days (Expire အထိ)</label>
-          <input id="c_days" type="number" value="30" min="1" />
-        </div>
-        <div class="btn-row">
-          <button class="primary" id="btnCreate">● Create User</button>
-        </div>
-        <p class="helper">
-          ✔ User ဖန်တီးပြီးရင် အောက်က <strong>User List</strong> ရဲ့ ပထမဆုံး row မှာ တွေ့ရပါမယ်။
-        </p>
-      </section>
+        <label>Username
+          <input id="c_username" class="input" placeholder="eg. kp001" />
+        </label>
+        <label>Password
+          <input id="c_password" class="input" placeholder="eg. 123456" />
+        </label>
+        <label>Days (Expire အထိ)
+          <input id="c_days" class="input" type="number" value="30" min="1" />
+        </label>
 
-      <!-- Renew / Delete -->
-      <section class="card">
+        <div class="pill-field">
+          <span>ဖန်တီးသွားတဲ့ User ကို List ထဲမှာ အပေါ်ဆုံးခန်းမှာ ပြသပေးသည် 👆</span>
+        </div>
+
+        <button id="btnCreate" class="btn">
+          ✓ Create User
+        </button>
+      </div>
+
+      <!-- Renew & Delete -->
+      <div class="card">
         <h2>User Renew / Delete</h2>
-        <small>ရှိပြီးသား User တွေကို နေ့ထပ်တိုး / ဖျက်ဖို့ အပိုင်း</small>
+        <small>ရှိပြီးသား User တွေကို နေ့ထပ်တိုး / ဖျက်ဖို့ အသုံးပြုပါ။</small>
 
-        <div class="card-section">
-          <div class="field">
-            <label for="e_username">Username (Renew)</label>
-            <input id="e_username" type="text" placeholder="eg. kp001" />
-          </div>
-          <div class="field">
-            <label for="e_days">Extra Days</label>
-            <input id="e_days" type="number" value="30" min="1" />
-          </div>
-          <div class="btn-row">
-            <button class="secondary" id="btnEdit">↻ Renew / Update</button>
-          </div>
-        </div>
+        <label>Username (Renew)
+          <input id="e_username" class="input" placeholder="eg. kp001" />
+        </label>
+        <label>Extra Days
+          <input id="e_days" class="input" type="number" value="30" min="1" />
+        </label>
+        <button id="btnEdit" class="btn btn-secondary">
+          ⟳ Renew / Update
+        </button>
 
-        <div class="card-section">
-          <div class="field">
-            <label for="d_username">Username (Delete)</label>
-            <input id="d_username" type="text" placeholder="eg. kp001" />
-          </div>
-          <div class="btn-row">
-            <button class="danger" id="btnDelete">✕ Delete User</button>
-          </div>
-        </div>
-      </section>
+        <hr style="border:none;border-top:1px solid #1f2937;margin:14px 0 10px;">
 
-      <!-- Check -->
-      <section class="card">
+        <label>Username (Delete)
+          <input id="d_username" class="input" placeholder="eg. kp001" />
+        </label>
+        <button id="btnDelete" class="btn btn-danger">
+          ✕ Delete User
+        </button>
+      </div>
+    </div>
+
+    <!-- Middle row: Check user + User list -->
+    <div class="row">
+      <!-- Check user -->
+      <div class="card" style="flex: 0.9 1 250px;">
         <h2>User ရှိ/မရှိ စစ်မယ်</h2>
-        <small>VPN App တစ်ဖက်က သုံးမဲ့ endpoint နဲ့ တူအောင် ဆောက်ထားပါတယ်။</small>
+        <small>VPN App မှာလည်း ဒီ endpoint ကိုသုံးထားတယ်။</small>
 
-        <div class="field">
-          <label for="q_username">Username</label>
-          <input id="q_username" type="text" placeholder="eg. kp001" />
-        </div>
-        <div class="btn-row">
-          <button class="secondary" id="btnCheck">? Check User</button>
-        </div>
+        <label>Username
+          <input id="q_username" class="input" placeholder="eg. kp001" />
+        </label>
+        <button id="btnCheck" class="btn btn-secondary">
+          ? Check User
+        </button>
 
-        <p id="userInfo" class="helper muted" style="margin-top:8px;">Result မရှိသေးပါ...</p>
-      </section>
+        <pre id="userInfo" class="mono" style="margin-top:10px; font-size:12px; background:#020617; padding:8px; border-radius:8px; border:1px solid #1f2937; max-height:190px; overflow:auto;"></pre>
+      </div>
 
-      <!-- User List -->
-      <section class="card">
-        <h2>
-          User List
-          <span class="status-chip">
-            <span id="listStatus">Idle</span>
-          </span>
-        </h2>
-        <small>အောက်မှာ မိမိ Worker + KV ထဲရှိပြီးသား User အားလုံးကို ကြည့်လို့ရပါတယ်။</small>
-
-        <div class="btn-row" style="margin-bottom:4px;">
-          <button class="secondary" id="btnList">⟳ Refresh</button>
-        </div>
-        <div id="userList" class="user-list">
-          <div class="muted" style="padding:6px 10px;">
-            User List load မလုပ်ရသေးပါ။
+      <!-- User list -->
+      <div class="card" style="flex: 1.3 1 320px;">
+        <div class="user-panel-header">
+          <div>
+            <h2>User List</h2>
+            <small>နောက်ဆုံး ဖန်တီးထားသော User တွေကို အပေါ်ဆုံးကနေ စုထားထားပါတယ်။</small>
           </div>
+          <button id="btnList" class="btn btn-secondary" style="margin-top:0;">
+            ↻ Refresh
+          </button>
         </div>
-      </section>
-    </main>
+
+        <div class="filter-row">
+          <input id="searchBox" class="input" placeholder="Username ဖြင့်ရှာမယ်..." />
+          <span class="tag" id="summaryTag">Loading…</span>
+        </div>
+
+        <div id="userList" class="user-table-wrapper">
+          <div class="empty">User List ပြသဖို့ Loading လုပ်နေပါသည်…</div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
+    // Worker API base
     const API_BASE = "https://vpnadmin.kpwork.qzz.io/kpvip";
 
-    const secretInput = document.getElementById("adminSecret");
-    const secretStatus = document.getElementById("secretStatus");
-
+    // ===== Admin Secret helper =====
     function getAdminSecret() {
       return localStorage.getItem("ADMIN_SECRET") || "";
     }
 
-    function saveAdminSecret(secret) {
-      localStorage.setItem("ADMIN_SECRET", secret);
-    }
-
-    function updateSecretStatus() {
-      const s = getAdminSecret();
-      if (!s) {
-        secretStatus.textContent = "not set";
-      } else {
-        secretStatus.textContent = "saved";
-      }
-    }
-
-    document.getElementById("btnAdminSecret").onclick = () => {
-      const secret = secretInput.value.trim();
+    async function requireAdminSecret() {
+      let secret = getAdminSecret();
       if (!secret) {
-        alert("Secret မထည့်ရသေးပါ");
-        return;
-      }
-      saveAdminSecret(secret);
-      updateSecretStatus();
-      alert("Admin Secret ကို သိမ်းထားပြီးပါပြီ ✔");
-    };
-
-    async function apiPost(path, body, requireAdmin = true) {
-      const url = API_BASE + path;
-      const headers = {
-        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-      };
-      const secret = getAdminSecret();
-
-      if (requireAdmin) {
+        secret = prompt("KP Admin Secret ထည့်ပါ");
         if (!secret) {
-          alert("Admin Secret မသတ်ထားသေးဘူး");
+          alert("Admin Secret မထည့်ရင် Panel ကို သုံးလို့မရပါ");
           return null;
         }
+        localStorage.setItem("ADMIN_SECRET", secret);
+      }
+      return secret;
+    }
+
+    // ===== Helper functions =====
+    function toast(msg) {
+      alert(msg);
+    }
+
+    function formatDate(ts) {
+      if (!ts) return "-";
+      try {
+        return new Date(ts * 1000).toLocaleString();
+      } catch {
+        return "-";
+      }
+    }
+
+    function daysLeft(expireAt) {
+      const now = Math.floor(Date.now() / 1000);
+      const diff = expireAt - now;
+      const d = Math.ceil(diff / 86400);
+      return d;
+    }
+
+    async function postForm(path, bodyObj, needSecret = true) {
+      const url = API_BASE + path;
+
+      const headers = {
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
+      };
+
+      if (needSecret) {
+        const secret = await requireAdminSecret();
+        if (!secret) return null;
         headers["x-admin-secret"] = secret;
       } else {
-        if (secret) headers["x-admin-secret"] = secret;
+        // needSecret = falseဆိုရင်လည်း သိမ်းထားတဲ့ secret ရှိရင် header ထပ်ပို့ပေးမယ်
+        const s = getAdminSecret();
+        if (s) headers["x-admin-secret"] = s;
       }
 
       const res = await fetch(url, {
         method: "POST",
         headers,
-        body: new URLSearchParams(body),
+        body: new URLSearchParams(bodyObj)
       });
-
       let data;
       try {
         data = await res.json();
@@ -469,6 +521,109 @@
       return data;
     }
 
+    async function callList() {
+      // list.php က adminOnly စစ်လို့ needSecret = true
+      return await postForm("/list.php", {}, true);
+    }
+
+    // ===== User List Rendering =====
+    let currentUsers = [];
+
+    function renderUserTable(filterText = "") {
+      const container = document.getElementById("userList");
+      const summaryTag = document.getElementById("summaryTag");
+      container.innerHTML = "";
+
+      let users = [...currentUsers];
+
+      // sort by createdAt desc
+      users.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+      if (filterText) {
+        const f = filterText.toLowerCase();
+        users = users.filter(u => (u.username || "").toLowerCase().includes(f));
+      }
+
+      summaryTag.textContent = users.length
+        ? `Total: ${users.length} user(s)`
+        : "User မရှိသေးဘူး";
+
+      if (!users.length) {
+        const div = document.createElement("div");
+        div.className = "empty";
+        div.textContent = "User မတွေ့ပါ။";
+        container.appendChild(div);
+        return;
+      }
+
+      const table = document.createElement("table");
+      const thead = document.createElement("thead");
+      thead.innerHTML = `
+        <tr>
+          <th>Username</th>
+          <th>Created</th>
+          <th>Expire</th>
+          <th>အခြေအနေ</th>
+        </tr>`;
+      table.appendChild(thead);
+
+      const tbody = document.createElement("tbody");
+
+      for (const u of users) {
+        const tr = document.createElement("tr");
+
+        const d = daysLeft(u.expireAt || 0);
+        const isExpired = isNaN(d) || d <= 0;
+
+        const created = formatDate(u.createdAt);
+        const expire = formatDate(u.expireAt);
+
+        tr.innerHTML = `
+          <td class="username-col mono">${u.username || "-"}</td>
+          <td class="mono dim">${created}</td>
+          <td class="mono dim">${expire}</td>
+          <td></td>
+        `;
+
+        const statusTd = tr.lastElementChild;
+        const chip = document.createElement("div");
+        chip.className = "status-chip" + (isExpired ? " expired" : "");
+        const dot = document.createElement("span");
+        dot.className = "status-dot" + (isExpired ? " expired" : "");
+        const text = document.createElement("span");
+        text.textContent = isExpired ? "Expired" : `${d} day(s) left`;
+
+        chip.appendChild(dot);
+        chip.appendChild(text);
+        statusTd.appendChild(chip);
+
+        tbody.appendChild(tr);
+      }
+
+      table.appendChild(tbody);
+      container.appendChild(table);
+    }
+
+    async function refreshUserList() {
+      const summaryTag = document.getElementById("summaryTag");
+      summaryTag.textContent = "Loading…";
+      const data = await callList();
+      if (!data || data.status !== "ok") {
+        summaryTag.textContent = "Load fail";
+        const container = document.getElementById("userList");
+        container.innerHTML = "";
+        const div = document.createElement("div");
+        div.className = "empty";
+        div.textContent = "User List load မအောင်မြင်ပါ: " + (data && data.message || "unknown");
+        container.appendChild(div);
+        return;
+      }
+      currentUsers = data.users || [];
+      renderUserTable(document.getElementById("searchBox").value.trim());
+    }
+
+    // ===== Button actions =====
+
     // Create user
     document.getElementById("btnCreate").onclick = async () => {
       const username = document.getElementById("c_username").value.trim();
@@ -476,18 +631,27 @@
       const days = document.getElementById("c_days").value.trim();
 
       if (!username || !password || !days) {
-        alert("username / password / days သုံးခုလုံး ဖြည့်ပေးပါ");
+        toast("username / password / days သုံးခုလုံး ဖြည့်ပေးပါ");
         return;
       }
 
-      const data = await apiPost("/create.php", { username, password, days });
-      if (!data) return;
+      const data = await postForm("/create.php", { username, password, days }, true);
 
-      if (data.status === "ok") {
-        alert("User ဖန်တီးပြီး: " + username);
-        loadUsers(); // auto refresh
+      if (data && data.status === "ok") {
+        toast("User ဖန်တီးပြီး: " + username);
+
+        const now = Math.floor(Date.now() / 1000);
+        currentUsers.push({
+          username,
+          password,
+          createdAt: now,
+          expireAt: data.expireAt || (now + parseInt(days, 10) * 86400)
+        });
+        renderUserTable(document.getElementById("searchBox").value.trim());
+      } else if (data) {
+        toast("Create Fail: " + (data.message || "unknown error"));
       } else {
-        alert("Create Fail: " + (data.message || "unknown error"));
+        toast("Create Fail: Network error");
       }
     };
 
@@ -495,18 +659,20 @@
     document.getElementById("btnEdit").onclick = async () => {
       const username = document.getElementById("e_username").value.trim();
       const days = document.getElementById("e_days").value.trim();
+
       if (!username || !days) {
-        alert("username / days ဖြည့်ပါ");
+        toast("username / days ဖြည့်ပါ");
         return;
       }
-      const data = await apiPost("/edit.php", { username, days });
-      if (!data) return;
 
-      if (data.status === "ok") {
-        alert("User renewed: " + username);
-        loadUsers();
+      const data = await postForm("/edit.php", { username, days }, true);
+      if (data && data.status === "ok") {
+        toast("User renewed: " + username);
+        refreshUserList();
+      } else if (data) {
+        toast("Renew Fail: " + (data.message || "unknown error"));
       } else {
-        alert("Renew Fail: " + (data.message || "unknown error"));
+        toast("Renew Fail: Network error");
       }
     };
 
@@ -514,110 +680,49 @@
     document.getElementById("btnDelete").onclick = async () => {
       const username = document.getElementById("d_username").value.trim();
       if (!username) {
-        alert("username ဖြည့်ပါ");
+        toast("username ဖြည့်ပါ");
         return;
       }
-      if (!confirm("User " + username + " ကို တကယ်ဖျက်မလား?")) return;
+      const ok = confirm("User " + username + " ကို တကယ်ဖျက်မလား?");
+      if (!ok) return;
 
-      const data = await apiPost("/delete.php", { username });
-      if (!data) return;
-
-      if (data.status === "ok") {
-        alert("User deleted: " + username);
-        loadUsers();
+      const data = await postForm("/delete.php", { username }, true);
+      if (data && data.status === "ok") {
+        toast("User deleted: " + username);
+        currentUsers = currentUsers.filter(u => u.username !== username);
+        renderUserTable(document.getElementById("searchBox").value.trim());
+      } else if (data) {
+        toast("Delete Fail: " + (data.message || "unknown error"));
       } else {
-        alert("Delete Fail: " + (data.message || "unknown error"));
+        toast("Delete Fail: Network error");
       }
     };
 
-    // Check user (user_exist.php, admin header မလို)
+    // Check user (user_exist.php => admin header မလို)
     document.getElementById("btnCheck").onclick = async () => {
       const username = document.getElementById("q_username").value.trim();
       if (!username) {
-        alert("username ဖြည့်ပါ");
+        toast("username ဖြည့်ပါ");
         return;
       }
-      const data = await apiPost("/user_exist.php", { username }, false);
+      const data = await postForm("/user_exist.php", { username }, false);
       const el = document.getElementById("userInfo");
-
       el.textContent = JSON.stringify(data, null, 2);
     };
 
-    async function loadUsers() {
-      const listStatus = document.getElementById("listStatus");
-      const container = document.getElementById("userList");
-      listStatus.textContent = "Loading…";
+    // List users
+    document.getElementById("btnList").onclick = async () => {
+      await refreshUserList();
+    };
 
-      const data = await apiPost("/list.php", {}, true);
-      if (!data) {
-        listStatus.textContent = "Error";
-        return;
-      }
+    // Search box filter
+    document.getElementById("searchBox").addEventListener("input", (e) => {
+      renderUserTable(e.target.value.trim());
+    });
 
-      if (data.status !== "ok") {
-        listStatus.textContent = "Unauthorized";
-        container.innerHTML =
-          '<div class="muted" style="padding:6px 10px;">User List load မအောင်မြင်ပါ: ' +
-          (data.message || "") +
-          "</div>";
-        return;
-      }
-
-      const users = data.users || [];
-      listStatus.textContent = users.length + " users";
-
-      if (!users.length) {
-        container.innerHTML =
-          '<div class="muted" style="padding:6px 10px;">User မရှိသေးပါ...</div>';
-        return;
-      }
-
-      users.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-
-      const rows = users
-        .map(u => {
-          const created = u.createdAt
-            ? new Date(u.createdAt * 1000).toLocaleString()
-            : "-";
-          const expire = u.expireAt
-            ? new Date(u.expireAt * 1000).toLocaleString()
-            : "-";
-          const now = Date.now() / 1000;
-          const ok = u.expireAt && now < u.expireAt;
-          const pillClass = ok ? "pill ok" : "pill bad";
-          const pillText = ok ? "Active" : "Expired";
-          return `
-          <tr>
-            <td>${u.username}</td>
-            <td>${created}</td>
-            <td>${expire}</td>
-            <td><span class="${pillClass}">${pillText}</span></td>
-          </tr>`;
-        })
-        .join("");
-
-      container.innerHTML = `
-        <table>
-          <thead>
-            <tr>
-              <th>Username</th>
-              <th>Created</th>
-              <th>Expire</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>${rows}</tbody>
-        </table>`;
-    }
-
-    document.getElementById("btnList").onclick = loadUsers;
-
+    // Auto load list on page load
     window.addEventListener("load", () => {
-      const s = getAdminSecret();
-      if (s) {
-        secretInput.value = s;
-      }
-      updateSecretStatus();
+      refreshUserList();
     });
   </script>
 </body>
