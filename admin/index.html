@@ -350,6 +350,10 @@
         <p class="subtitle">Username / Password ကို အလွယ်တကူ စီမံခန့်ခွဲဖို့ Panel ဖြစ်ပါတယ်။</p>
       </div>
       <div class="top-actions">
+        <button id="btnAdminSecret" class="btn btn-secondary" style="margin-top:0;">
+          🔐 Admin Login
+        </button>
+        <span class="small-tag" id="adminStatus">🔒 Admin: Locked</span>
         <span class="small-tag">API: <b>/kpvip/*.php</b></span>
       </div>
     </div>
@@ -359,7 +363,7 @@
       <!-- Create -->
       <div class="card">
         <h2>အသစ် User ဖန်တီးမယ်</h2>
-        <small>Username, Password, Expire Days သတ်မှတ်ပြီး VIP User ဖန်တီးပါ။</small>
+        <small>Username, Password, Expire Days သတ်မှတ်ပြီး VIP User ဖန်တီးပါ။ (1DV – Login ဝင်တဲ့နေ့ကစ Expire စမယ်)</small>
 
         <label>Username
           <input id="c_username" class="input" placeholder="eg. kp001" />
@@ -448,26 +452,47 @@
   </div>
 
   <script>
-    // Worker API base
     const API_BASE = "https://vpnadmin.kpwork.qzz.io/kpvip";
 
-    // ===== Admin Secret helper =====
+    // ===== Admin Secret helpers =====
     function getAdminSecret() {
       return localStorage.getItem("ADMIN_SECRET") || "";
+    }
+
+    function setAdminSecret(secret) {
+      localStorage.setItem("ADMIN_SECRET", secret);
+    }
+
+    function updateAdminStatus() {
+      const el = document.getElementById("adminStatus");
+      if (getAdminSecret()) {
+        el.textContent = "✅ Admin: Logged in";
+      } else {
+        el.textContent = "🔒 Admin: Locked";
+      }
     }
 
     async function requireAdminSecret() {
       let secret = getAdminSecret();
       if (!secret) {
         secret = prompt("KP Admin Secret ထည့်ပါ");
-        if (!secret) {
-          alert("Admin Secret မထည့်ရင် Panel ကို သုံးလို့မရပါ");
-          return null;
-        }
-        localStorage.setItem("ADMIN_SECRET", secret);
+        if (!secret) return null;
+        secret = secret.trim();
+        if (!secret) return null;
+        setAdminSecret(secret);
       }
+      updateAdminStatus();
       return secret;
     }
+
+    document.getElementById("btnAdminSecret").onclick = async () => {
+      const current = getAdminSecret();
+      const s = prompt("KP Admin Secret ထည့်/ပြန်ပြင်ပါ", current || "");
+      if (!s) return;
+      setAdminSecret(s.trim());
+      updateAdminStatus();
+      alert("Admin Secret သိမ်းပြီးပါပြီ");
+    };
 
     // ===== Helper functions =====
     function toast(msg) {
@@ -484,6 +509,7 @@
     }
 
     function daysLeft(expireAt) {
+      if (!expireAt) return null;
       const now = Math.floor(Date.now() / 1000);
       const diff = expireAt - now;
       const d = Math.ceil(diff / 86400);
@@ -499,10 +525,12 @@
 
       if (needSecret) {
         const secret = await requireAdminSecret();
-        if (!secret) return null;
+        if (!secret) {
+          toast("Admin Secret မထည့်လော့ Panel ကိုသုံးလို့ မရဘူး");
+          return null;
+        }
         headers["x-admin-secret"] = secret;
       } else {
-        // needSecret = falseဆိုရင်လည်း သိမ်းထားတဲ့ secret ရှိရင် header ထပ်ပို့ပေးမယ်
         const s = getAdminSecret();
         if (s) headers["x-admin-secret"] = s;
       }
@@ -512,6 +540,7 @@
         headers,
         body: new URLSearchParams(bodyObj)
       });
+
       let data;
       try {
         data = await res.json();
@@ -522,7 +551,6 @@
     }
 
     async function callList() {
-      // list.php က adminOnly စစ်လို့ needSecret = true
       return await postForm("/list.php", {}, true);
     }
 
@@ -536,7 +564,6 @@
 
       let users = [...currentUsers];
 
-      // sort by createdAt desc
       users.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
 
       if (filterText) {
@@ -573,10 +600,10 @@
         const tr = document.createElement("tr");
 
         const d = daysLeft(u.expireAt || 0);
-        const isExpired = isNaN(d) || d <= 0;
+        const isExpired = d !== null && (isNaN(d) || d <= 0);
 
         const created = formatDate(u.createdAt);
-        const expire = formatDate(u.expireAt);
+        const expire = u.expireAt ? formatDate(u.expireAt) : "Not started";
 
         tr.innerHTML = `
           <td class="username-col mono">${u.username || "-"}</td>
@@ -591,7 +618,14 @@
         const dot = document.createElement("span");
         dot.className = "status-dot" + (isExpired ? " expired" : "");
         const text = document.createElement("span");
-        text.textContent = isExpired ? "Expired" : `${d} day(s) left`;
+
+        if (!u.expireAt) {
+          text.textContent = "Not started (no login)";
+        } else if (isExpired) {
+          text.textContent = "Expired";
+        } else {
+          text.textContent = `${d} day(s) left`;
+        }
 
         chip.appendChild(dot);
         chip.appendChild(text);
@@ -622,9 +656,7 @@
       renderUserTable(document.getElementById("searchBox").value.trim());
     }
 
-    // ===== Button actions =====
-
-    // Create user
+    // ===== Buttons =====
     document.getElementById("btnCreate").onclick = async () => {
       const username = document.getElementById("c_username").value.trim();
       const password = document.getElementById("c_password").value.trim();
@@ -636,16 +668,15 @@
       }
 
       const data = await postForm("/create.php", { username, password, days }, true);
-
       if (data && data.status === "ok") {
         toast("User ဖန်တီးပြီး: " + username);
-
         const now = Math.floor(Date.now() / 1000);
         currentUsers.push({
           username,
           password,
           createdAt: now,
-          expireAt: data.expireAt || (now + parseInt(days, 10) * 86400)
+          // 1DV မစသေးလို့ expireAt ကို null ထားရန်
+          expireAt: data.expireAt || null
         });
         renderUserTable(document.getElementById("searchBox").value.trim());
       } else if (data) {
@@ -655,7 +686,6 @@
       }
     };
 
-    // Renew user
     document.getElementById("btnEdit").onclick = async () => {
       const username = document.getElementById("e_username").value.trim();
       const days = document.getElementById("e_days").value.trim();
@@ -676,7 +706,6 @@
       }
     };
 
-    // Delete user
     document.getElementById("btnDelete").onclick = async () => {
       const username = document.getElementById("d_username").value.trim();
       if (!username) {
@@ -698,7 +727,7 @@
       }
     };
 
-    // Check user (user_exist.php => admin header မလို)
+    // user_exist.php -> admin header မလိုပေမယ့် ရှိရင် ထပ်ပို့မယ်
     document.getElementById("btnCheck").onclick = async () => {
       const username = document.getElementById("q_username").value.trim();
       if (!username) {
@@ -710,18 +739,16 @@
       el.textContent = JSON.stringify(data, null, 2);
     };
 
-    // List users
     document.getElementById("btnList").onclick = async () => {
       await refreshUserList();
     };
 
-    // Search box filter
     document.getElementById("searchBox").addEventListener("input", (e) => {
       renderUserTable(e.target.value.trim());
     });
 
-    // Auto load list on page load
     window.addEventListener("load", () => {
+      updateAdminStatus();
       refreshUserList();
     });
   </script>
