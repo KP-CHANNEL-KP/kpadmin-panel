@@ -325,188 +325,81 @@ const ADMIN_HTML = `<!DOCTYPE html>
 </body>
 </html>`;
 
-// ------------------------------------------------------
-//   API Worker logic
-// ------------------------------------------------------
-export default {
-  async fetch(request, env, ctx) {
-    const url = new URL(request.url);
-    let path = url.pathname;
 
-    const base = "/kpvip";
-    if (path.startsWith(base)) {
-      path = path.slice(base.length); // "/kpvip/create.php" -> "/create.php"
-      if (path === "") path = "/";
-    }
+  /**
+ * ====================================
+ * HELPER FUNCTIONS (MOCK/PLACEHOLDER)
+ * ====================================
+ * These functions are assumed to be defined elsewhere in your project
+ * or must be implemented for a real Cloudflare Worker environment.
+ */
 
-    // Serve Admin Panel HTML
-    if (
-      path === "/" ||
-      path === "/admin" ||
-      path === "/admin/" ||
-      path === "/admin/index.html"
-    ) {
-      return new Response(ADMIN_HTML, {
-        status: 200,
-        headers: { "Content-Type": "text/html; charset=utf-8" },
-      });
-    }
-
-    // CORS preflight
-    if (request.method === "OPTIONS") {
-      return new Response(null, {
-        status: 204,
-        headers: corsHeaders(),
-      });
-    }
-
-    try {
-      // --------- Admin-only routes ---------
-      if (request.method === "POST" && path === "/create.php") {
-        await requireAdminOrThrow(request, env);
-        return await handleCreate(request, env);
-      }
-
-      if (request.method === "POST" && path === "/edit.php") {
-        await requireAdminOrThrow(request, env);
-        return await handleEdit(request, env);
-      }
-
-      if (request.method === "POST" && path === "/delete.php") {
-        const isAdmin = await checkAdmin(request, env);
-        const auth = request.headers.get("Authorization") || "";
-        const isAppDelete = auth === "N4VPN-MinKhant";
-
-        if (!isAdmin && !isAppDelete) {
-          return json({ status: "error", message: "Unauthorized" }, 401);
-        }
-        return await handleDelete(request, env, isAppDelete);
-      }
-
-      if (request.method === "POST" && path === "/list.php") {
-        await requireAdminOrThrow(request, env);
-        return await handleList(env);
-      }
-
-      // --------- App routes ---------
-      if (request.method === "POST" && path === "/login.php") {
-        return await handleLogin(request, env);
-      }
-
-      if (request.method === "POST" && path === "/user_exist.php") {
-        return await handleUserExist(request, env);
-      }
-
-      return json(
-        { status: "error", message: "Not found", path, method: request.method },
-        404
-      );
-    } catch (e) {
-      return json(
-        { status: "error", message: e.message || "Internal error" },
-        500
-      );
-    }
-  },
-};
-
-// ------------ helpers -------------
-function corsHeaders(extra = {}) {
-  return {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-    "Access-Control-Allow-Headers":
-      "Content-Type,Authorization,x-admin-secret",
-    ...extra,
-  };
-}
-
-function json(obj, status = 200) {
-  return new Response(JSON.stringify(obj), {
-    status,
+// Placeholder for a function to return a JSON Response
+function json(data, status = 200) {
+  return new Response(JSON.stringify(data), {
+    status: status,
     headers: {
-      "Content-Type": "application/json; charset=utf-8",
-      ...corsHeaders(),
+      "Content-Type": "application/json",
     },
   });
 }
 
-async function checkAdmin(request, env) {
-  const secret = env.ADMIN_SECRET;
-  if (!secret) return false;
-
-  const h = request.headers;
-  const x = h.get("x-admin-secret") || "";
-  const auth = h.get("Authorization") || "";
-
-  if (x === secret) return true;
-  if (auth === secret) return true;
-  if (auth === `Bearer ${secret}`) return true;
-
-  return false;
-}
-
-async function requireAdminOrThrow(request, env) {
-  const ok = await checkAdmin(request, env);
-  if (!ok) throw new Error("Unauthorized");
-}
-
+// Placeholder for getting form data (e.g., from a request body)
 async function getFormData(request) {
-  const text = await request.text();
-  return new URLSearchParams(text);
+  try {
+    // Assuming the request body is form-data or JSON
+    const contentType = request.headers.get("Content-Type") || "";
+    if (contentType.includes("application/json")) {
+      const data = await request.json();
+      // Simple way to convert JSON object to a FormData-like structure for existing logic
+      const form = new Map();
+      for (const [key, value] of Object.entries(data)) {
+        form.set(key, String(value));
+      }
+      return form;
+    } else if (contentType.includes("application/x-www-form-urlencoded") || contentType.includes("multipart/form-data")) {
+      return await request.formData();
+    }
+  } catch (error) {
+    // Handle cases where body parsing fails
+    console.error("Error parsing form data:", error);
+    return new Map();
+  }
 }
 
+// Placeholder to get user data from KV
 async function getUser(env, username) {
-  if (!username) return null;
-  const raw = await env.USERS_KV.get(username);
-  if (!raw) return null;
+  const userString = await env.USERS_KV.get(username);
+  if (!userString) return null;
   try {
-    return JSON.parse(raw);
-  } catch {
+    return JSON.parse(userString);
+  } catch (error) {
+    console.error(`Error parsing user data for ${username}:`, error);
     return null;
   }
 }
 
-async function putUser(env, username, data) {
-  const value = JSON.stringify(data);
-  await env.USERS_KV.put(username, value);
+// Placeholder to save user data to KV
+async function putUser(env, username, userObject) {
+  // Ensure the object has necessary fields before stringifying
+  if (!userObject.username) userObject.username = username;
+  await env.USERS_KV.put(username, JSON.stringify(userObject));
 }
 
+// Placeholder to delete user data from KV
 async function deleteUser(env, username) {
   await env.USERS_KV.delete(username);
 }
 
-// ------------ API handlers -------------
-async function handleCreate(request, env) {
-  const form = await getFormData(request);
-  const username = (form.get("username") || "").trim();
-  const password = (form.get("password") || "").trim();
-  const daysStr = (form.get("days") || "").trim();
+/**
+ * ====================================
+ * CORE HANDLER FUNCTIONS
+ * ====================================
+ */
 
-  if (!username || !password || !daysStr) {
-    return json({ status: "error", message: "missing_fields" }, 400);
-  }
-
-  const days = Number(daysStr) || 0;
-  const now = Math.floor(Date.now() / 1000);
-  const expireAt = now + days * 24 * 60 * 60;
-
-  const exist = await getUser(env, username);
-  const createdAt = exist && exist.createdAt ? exist.createdAt : now;
-
-  const data = {
-    username,
-    password,
-    createdAt,
-    expireAt,
-    device_id: exist ? exist.device_id || null : null,
-  };
-
-  await putUser(env, username, data);
-
-  return json({ status: "ok", message: "User created", username, expireAt });
-}
-
+/**
+ * Handles editing a user's expiration date or device ID.
+ */
 async function handleEdit(request, env) {
   const form = await getFormData(request);
   const username = (form.get("username") || "").trim();
@@ -521,32 +414,51 @@ async function handleEdit(request, env) {
   }
 
   const daysStr = (form.get("days") || "").trim();
-  const expiredDateStr = (form.get("expired_date") || "").trim();
+  const expiredDateStr = (form.get("expired_date") || "").trim(); // Unix timestamp in milliseconds
   const deviceId = (form.get("device_id") || "").trim();
 
-  const now = Math.floor(Date.now() / 1000);
-  let expireAt = u.expireAt || now;
+  const now = Math.floor(Date.now() / 1000); // Current time in seconds
+  let expireAt = u.expireAt || now; // Initialize with current expiration or 'now'
 
+  // --- Expiration Date Logic ---
   if (daysStr) {
-    const days = Number(daysStr) || 0;
+    const days = Number(daysStr);
+    if (isNaN(days) || days < 0) {
+        return json({ status: "error", message: "invalid_days_value" }, 400);
+    }
+    // Set expiration relative to now
     expireAt = now + days * 24 * 60 * 60;
   } else if (expiredDateStr) {
-    const ms = Number(expiredDateStr) || 0;
+    // expiredDateStr is expected to be a Unix timestamp in milliseconds
+    const ms = Number(expiredDateStr);
+    if (isNaN(ms) || ms < 0) {
+        return json({ status: "error", message: "invalid_expired_date_value" }, 400);
+    }
+    // Convert milliseconds to seconds
     expireAt = Math.floor(ms / 1000);
   }
 
+  // --- Device ID Logic ---
   if (deviceId) {
     u.device_id = deviceId;
   }
 
+  // Update user object and save
   u.expireAt = expireAt;
   await putUser(env, username, u);
 
+  // Return the updated expiration time (in seconds)
   return json({ status: "ok", message: "updated", username, expireAt });
 }
 
+/**
+ * Handles deleting a user.
+ * @param {boolean} isAppDelete - Flag to determine key name (e.g., from an Admin panel).
+ */
 async function handleDelete(request, env, isAppDelete) {
   const form = await getFormData(request);
+  
+  // Use 'usernameToDelete' if isAppDelete is true, otherwise use 'username'
   const username = isAppDelete
     ? (form.get("usernameToDelete") || "").trim()
     : (form.get("username") || "").trim();
@@ -556,62 +468,82 @@ async function handleDelete(request, env, isAppDelete) {
   }
 
   await deleteUser(env, username);
+  
+  // Note: KV delete is idempotent, so we return success even if the user didn't exist.
   return json({ status: "ok", message: "deleted", username });
 }
 
+/**
+ * Handles listing all users from the KV store.
+ */
 async function handleList(env) {
   const list = await env.USERS_KV.list();
-  const users = [];
+  const userKeys = list.keys.map(k => k.name);
 
-  for (const k of list.keys) {
-    const u = await getUser(env, k.name);
-    if (!u) continue;
-    users.push({
-      username: u.username || k.name,
+  // Fetch all user objects in parallel for efficiency
+  const userPromises = userKeys.map(key => getUser(env, key));
+  const userObjects = await Promise.all(userPromises);
+
+  const users = userObjects
+    .filter(u => u !== null) // Filter out users that failed to load/parse
+    .map(u => ({
+      username: u.username,
       createdAt: u.createdAt || null,
       expireAt: u.expireAt || null,
-    });
-  }
+      // SECURITY NOTE: DO NOT expose the password field here in a real application!
+    }));
 
   return json({ status: "ok", users });
 }
 
+/**
+ * Handles user login and checks expiration.
+ */
 async function handleLogin(request, env) {
   const form = await getFormData(request);
   const username = (form.get("username") || "").trim();
   const password = (form.get("password") || "").trim();
 
   if (!username || !password) {
-    return json({ status: "error", message: "missing_fields" }, 400);
+    return json({ status: "error", message: "missing_fields", details: "Username or password missing" }, 400);
   }
 
   const u = await getUser(env, username);
   if (!u) {
-    return json({ status: "user_not_found", message: "User not found" });
+    // Return a generic error message for security (e.g., "Invalid credentials") 
+    // instead of "User not found" to prevent user enumeration attacks.
+    return json({ status: "error", message: "invalid_credentials" }, 401); 
   }
 
+  // ⚠️ SECURITY ALERT: Storing/checking plain passwords like this is INSECURE.
+  // Use a strong, one-way hashing algorithm (like Argon2 or bcrypt) for production.
   if (u.password !== password) {
-    return json({ status: "wrong_password", message: "Wrong password" });
+    return json({ status: "error", message: "invalid_credentials" }, 401); 
   }
 
-  const now = Math.floor(Date.now() / 1000);
+  const now = Math.floor(Date.now() / 1000); // Current time in seconds
+  
   if (!u.expireAt || u.expireAt < now) {
-    return json({ status: "expired", message: "Expired" });
+    return json({ status: "error", message: "expired_account", details: "Account has expired" }, 403);
   }
 
+  // Calculate remaining days (at least 1 day if not expired)
   const remainingSec = u.expireAt - now;
-  const remainingDays = Math.max(
-    1,
-    Math.floor(remainingSec / (24 * 60 * 60))
-  );
+  // Use Math.ceil to ensure partial days are counted as 1 (better for user experience)
+  const remainingDays = Math.ceil(remainingSec / (24 * 60 * 60));
 
   return json({
-    status: "login",
-    user: username,
-    expired_date: String(remainingDays),
+    status: "ok", // Changed from "login" to "ok" for better status consistency
+    message: "login_successful",
+    username: username,
+    remaining_days: String(remainingDays), // Keep as string if API consumers expect it
+    expireAt: u.expireAt, // Optionally return the exact expiration timestamp
   });
 }
 
+/**
+ * Handles checking if a user exists and returns their details.
+ */
 async function handleUserExist(request, env) {
   const form = await getFormData(request);
   const username = (form.get("username") || "").trim();
@@ -622,13 +554,17 @@ async function handleUserExist(request, env) {
 
   const u = await getUser(env, username);
   if (!u) {
-    return json({ status: "error", message: "user_not_found" });
+    return json({ status: "error", message: "user_not_found" }, 404);
   }
 
   return json({
-    status: "success",
-    user: username,
-    expireAt: u.expireAt || null,
-    createdAt: u.createdAt || null,
+    status: "ok",
+    username: username,
+    expireAt: u.expireAt || null, // Unix timestamp in seconds
+    createdAt: u.createdAt || null, // Unix timestamp in seconds
+    // SECURITY NOTE: DO NOT expose the password field here!
   });
 }
+
+// Export functions if this is a module/worker
+// export { handleEdit, handleDelete, handleList, handleLogin, handleUserExist };
