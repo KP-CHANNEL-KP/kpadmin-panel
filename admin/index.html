@@ -452,7 +452,8 @@
   </div>
 
   <script>
-    const API_BASE = "https://vpnadmin.kpwork.qzz.io/kpvip";
+    // API base ကို domain မဆိုအလုပ်လုပ်အောင် relative သတ်မယ်
+    const API_BASE = "/kpvip";
 
     // ===== Admin Secret helpers =====
     function getAdminSecret() {
@@ -526,7 +527,7 @@
       if (needSecret) {
         const secret = await requireAdminSecret();
         if (!secret) {
-          toast("Admin Secret မထည့်လော့ Panel ကိုသုံးလို့ မရဘူး");
+          toast("Admin Secret မထည့်လို့ Panel ကိုသုံးလို့ မရဘူး");
           return null;
         }
         headers["x-admin-secret"] = secret;
@@ -535,17 +536,26 @@
         if (s) headers["x-admin-secret"] = s;
       }
 
-      const res = await fetch(url, {
-        method: "POST",
-        headers,
-        body: new URLSearchParams(bodyObj)
-      });
+      let res;
+      try {
+        res = await fetch(url, {
+          method: "POST",
+          headers,
+          body: new URLSearchParams(bodyObj)
+        });
+      } catch (e) {
+        console.error("Network error:", e);
+        toast("Network error: " + e.message);
+        return null;
+      }
 
       let data;
       try {
         data = await res.json();
       } catch (e) {
-        data = { status: "error", message: "Invalid JSON", raw: await res.text() };
+        const raw = await res.text();
+        console.error("Invalid JSON:", raw);
+        data = { status: "error", message: "Invalid JSON", raw };
       }
       return data;
     }
@@ -675,7 +685,6 @@
           username,
           password,
           createdAt: now,
-          // 1DV မစသေးလို့ expireAt ကို null ထားရန်
           expireAt: data.expireAt || null
         });
         renderUserTable(document.getElementById("searchBox").value.trim());
